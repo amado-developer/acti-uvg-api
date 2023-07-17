@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+from rest_framework.settings import api_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,15 +33,36 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'rest_framework',  # Django REST Framework
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',  # Django REST Framework
+    'knox',  # Knox authentication
+    'users.apps.UsersConfig',  # Users app
 ]
 
+REST_KNOX = {
+    'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
+    # By default, it is set to 64 characters (this shouldn't need changing).
+    'AUTH_TOKEN_CHARACTER_LENGTH': 64,
+    # The default is 10 hours i.e., timedelta(hours=10).
+    'TOKEN_TTL': timedelta(minutes=45),
+    'USER_SERIALIZER': 'knox.serializers.UserSerializer',
+    # By default, this option is disabled and set to None -- thus no limit.
+    'TOKEN_LIMIT_PER_USER': None,
+    # This defines if the token expiry time is extended by TOKEN_TTL each time the token is used.
+    'AUTO_REFRESH': False,
+    'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
+}
+
+AUTH_USER_MODEL = 'users.User'  # Custom user model
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': 'knox.auth.TokenAuthentication',
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -77,7 +100,7 @@ WSGI_APPLICATION = 'ActiUVGAPI.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'acti-uvg',
+        'NAME': 'actiuvg',
         'USER': 'amado',
         'PASSWORD': '1234',
         'HOST': 'localhost',
